@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?><sqlb_project><db path="" readonly="0" foreign_keys="" case_sensitive_like="" temp_store="" wal_autocheckpoint="" synchronous=""/><attached/><window><main_tabs open="structure browser pragmas query" current="3"/></window><tab_structure><column_width id="0" width="300"/><column_width id="1" width="0"/><column_width id="2" width="100"/><column_width id="3" width="2174"/><column_width id="4" width="0"/></tab_structure><tab_browse><table title="." custom_title="0" dock_id="2" table="0,0:"/><dock_state state="000000ff00000000fd0000000100000002000002480000020cfc0100000002fb000000160064006f0063006b00420072006f00770073006500310100000000000002480000000000000000fb000000160064006f0063006b00420072006f00770073006500320100000000ffffffff0000011e00ffffff000002480000000000000004000000040000000800000008fc00000000"/><default_encoding codec=""/><browse_table_settings/></tab_browse><tab_sql><sql name="SQL 1*">SELECT p.name,fecha_creacion, count(*) from order_items ot
+left join products p
+	on p.id = ot.product_id
+group by p.name, fecha_creacion
+	--order by id desc
+order by fecha_creacion desc
+
+
+
+select * from order_items 
+where fecha_creacion is not NULL
+
+
+select * from order_items
+
+
+
+ALTER TABLE order_items
+ADD COLUMN fecha_creacion TEXT;
+
+
+
+
+
+select * from orders
+
+
+
+
+CREATE TRIGGER order_items_set_fecha_creacion
+AFTER INSERT ON order_items
+FOR EACH ROW
+BEGIN
+  UPDATE order_items
+  SET fecha_creacion = datetime('now', 'localtime')
+  WHERE rowid = NEW.rowid;
+END;
+
+
+DROP TRIGGER IF EXISTS order_items_set_fecha_creacion;
+</sql><current_tab id="0"/></tab_sql></sqlb_project>
