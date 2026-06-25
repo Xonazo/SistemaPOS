@@ -490,9 +490,9 @@ export default function Home() {
         <NavBar />
 
       <div className="w-full max-w-[1536px] mx-auto bg-white rounded-xl shadow-2xl flex flex-col flex-1 min-h-0">
-    <div className="flex flex-col md:flex-row flex-1 min-h-0 overflow-hidden">
+    <div className="flex flex-col md:flex-row flex-grow">
             {/* Products panel (left side) */}
-      <div className="w-full md:w-3/5 p-4 overflow-y-auto flex-1 min-h-0">
+      <div className="w-full md:w-3/5 p-4 overflow-y-auto">
               <ProductPanel
                 products={products}
                 onAddToOrder={handleAddToOrder}
