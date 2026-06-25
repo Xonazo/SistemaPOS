@@ -21,6 +21,8 @@ function buildKitchenTicketContent(venta) {
     content += '-----------------------\n';
     content += `Fecha: ${fecha}\n`;
     content += `Hora: ${hora}\n\n`;
+    const esParaLlevar = venta.consumption_type === 'llevar' || venta.delivery;
+    content += `Tipo: ${esParaLlevar ? '🥡 PARA LLEVAR' : '🍽️  PARA SERVIR'}\n`;
 
     content += 'Preparar:\n';
     content += '\x1d\x21\x01'; 
@@ -37,6 +39,10 @@ function buildKitchenTicketContent(venta) {
             });
         }
     });
+
+
+
+
 
     content += '\n-----------------------\n';
     content += 'Gracias, ¡manos a la obra!\n';
@@ -98,6 +104,7 @@ function buildSaleTicketContent(venta) {
     content += '--------------------\n';
 
     content += `Método de pago: ${venta.payment_method}\n`;
+    content += `Tipo: ${venta.consumption_type === 'llevar' || venta.delivery ? 'Para Llevar' : 'Para Servir'}\n`;
     content += `Entrega a domicilio: ${venta.delivery ? 'Sí' : 'No'}\n`;
     content += 'Gracias por su compra\n';
     content += 'Vuelva pronto\n';

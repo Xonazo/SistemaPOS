@@ -24,7 +24,10 @@ const OrderPanel = ({
   delivery,
   deliveryCost,
   onResetAllOrder,
-  onPrintBoth
+  onPrintBoth,
+  consumptionType,
+  onConsumptionTypeChange,
+
   
 
 
@@ -69,6 +72,8 @@ const OrderPanel = ({
         deliveryCost={deliveryCost}
         onResetAllOrder={onResetAllOrder}
         onPrintBoth={onPrintBoth}
+        consumptionType={consumptionType}
+        onConsumptionTypeChange={onConsumptionTypeChange}
 
 
       />

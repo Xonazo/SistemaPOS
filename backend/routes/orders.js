@@ -109,7 +109,8 @@ router.post('/', (req, res) => {
     total,
     payment_method,
     timestamp,
-    items
+    items,
+    consumption_type
   } = req.body;
 
   // Validación
@@ -124,8 +125,8 @@ router.post('/', (req, res) => {
 
   const insertOrder = db.prepare(`
     INSERT INTO orders
-    (uid, amount_received, change_amount, delivery, delivery_cost, subtotal, total, payment_method, timestamp)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    (uid, amount_received, change_amount, delivery, delivery_cost, subtotal, total, payment_method, timestamp,consumption_type)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?,?)
   `);
 
   const insertOrderItem = db.prepare(`
@@ -153,7 +154,8 @@ router.post('/', (req, res) => {
       subtotal,
       total,
       payment_method,
-      timestamp
+      timestamp,
+      consumption_type || 'servir' 
     );
 
     const orderId = orderInfo.lastInsertRowid;
@@ -186,295 +188,6 @@ router.post('/', (req, res) => {
     res.status(500).json({ error: err.message || 'Error al crear orden' });
   }
 });
-
-
-// // Informe de ventas entre dos fechas con hora
-// router.get('/reports/sales', (req, res) => {
-//   const { start_date, end_date } = req.query;
-
-//   if (!start_date || !end_date) {
-//     return res.status(400).json({ error: 'Fechas start_date y end_date son requeridas' });
-//   }
-
-//   // Validar formato de fecha (YYYY-MM-DD HH:MM:SS)
-//   const dateRegex = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/;
-//   if (!dateRegex.test(start_date) || !dateRegex.test(end_date)) {
-//     return res.status(400).json({ error: 'Formato de fecha inválido. Use YYYY-MM-DD HH:MM:SS' });
-//   }
-
-//   try {
-//     // Convertir fechas locales a objetos Date, luego a ISO 8601 UTC
-//     // Asume que start_date y end_date están en la zona horaria local del servidor
-//     const toUTCISOString = (localDateTimeStr) => {
-//       // Ejemplo: "2025-05-29 18:00:00" -> "2025-05-29T18:00:00"
-//       const isoLocal = localDateTimeStr.replace(' ', 'T');
-//       const dateObj = new Date(isoLocal);
-
-//       // Validar que la fecha sea válida
-//       if (isNaN(dateObj)) {
-//         throw new Error('Fecha inválida');
-//       }
-
-//       // Convertir a ISO string UTC
-//       return dateObj.toISOString();
-//     };
-
-//     const startUTC = toUTCISOString(start_date);
-//     const endUTC = toUTCISOString(end_date);
-
-//     // Query para obtener órdenes entre fechas UTC
-//     const ordersSql = `
-//       SELECT
-//         o.id,
-//         o.uid,
-//         o.timestamp,
-//         o.total,
-//         o.subtotal,
-//         o.amount_received,
-//         o.change_amount,
-//         o.payment_method,
-//         o.delivery,
-//         o.delivery_cost
-//       FROM orders o
-//       WHERE o.timestamp BETWEEN ? AND ?
-//       ORDER BY o.timestamp DESC
-//     `;
-//     const orders = db.prepare(ordersSql).all(startUTC, endUTC);
-
-//     if (orders.length === 0) {
-//       return res.json({
-//         summary: {
-//           total_orders: 0,
-//           total_revenue: 0,
-//           average_order_value: 0,
-//           delivery_orders: 0,
-//           total_delivery_revenue: 0
-//         },
-//         details: [],
-//         period: { start_date, end_date }
-//       });
-//     }
-
-//     // Query para obtener los ítems de las órdenes
-//     const itemsSql = `
-//       SELECT
-//         oi.id as order_item_id,
-//         oi.order_id,
-//         oi.quantity,
-//         p.id as product_id,
-//         p.name as product_name,
-//         p.price as product_price,
-//         c.name as category,
-//         oin.name as note_name,
-//         oin.price as note_price
-//       FROM order_items oi
-//       JOIN products p ON p.id = oi.product_id
-//       LEFT JOIN categories c ON c.id = p.category_id
-//       LEFT JOIN order_item_notes oin ON oin.order_item_id = oi.id
-//       WHERE oi.order_id IN (${orders.map(() => '?').join(',')})
-//     `;
-//     const itemsRaw = db.prepare(itemsSql).all(...orders.map(o => o.id));
-
-//     const orderItemsMap = {};
-//     for (const row of itemsRaw) {
-//       const orderId = row.order_id;
-//       const orderItemId = row.order_item_id;
-
-//       if (!orderItemsMap[orderId]) orderItemsMap[orderId] = [];
-
-//       let item = orderItemsMap[orderId].find(i => i.id === orderItemId);
-
-//       if (!item) {
-//         item = {
-//           id: orderItemId,
-//           product: {
-//             id: row.product_id,
-//             name: row.product_name,
-//             price: row.product_price,
-//             category: row.category
-//           },
-//           quantity: row.quantity,
-//           notes: []
-//         };
-//         orderItemsMap[orderId].push(item);
-//       }
-
-//       if (row.note_name) {
-//         item.notes.push({
-//           name: row.note_name,
-//           price: row.note_price
-//         });
-//       }
-//     }
-
-//     const detailedSales = orders.map(order => ({
-//       ...order,
-//       items: orderItemsMap[order.id] || []
-//     }));
-
-//     // Resumen de ventas
-//     const summarySql = `
-//       SELECT
-//         COUNT(DISTINCT o.id) as total_orders,
-//         SUM(o.total) as total_revenue,
-//         AVG(o.total) as average_order_value,
-//         SUM(CASE WHEN o.delivery = 1 THEN 1 ELSE 0 END) as delivery_orders,
-//         SUM(o.delivery_cost) as total_delivery_revenue
-//       FROM orders o
-//       WHERE o.timestamp BETWEEN ? AND ?
-//     `;
-//     const summary = db.prepare(summarySql).get(startUTC, endUTC);
-
-//     res.json({
-//       summary,
-//       details: detailedSales,
-//       period: { start_date, end_date }
-//     });
-//   } catch (err) {
-//     console.error('Error al generar reporte:', err);
-//     res.status(500).json({ error: 'Error al generar reporte de ventas' });
-//   }
-// });
-
-
-
-// Informe de ventas entre dos fechas con hora (solo órdenes activas)
-// router.get('/reports/sales', (req, res) => {
-//   const { start_date, end_date } = req.query;
-
-//   if (!start_date || !end_date) {
-//     return res.status(400).json({ error: 'Fechas start_date y end_date son requeridas' });
-//   }
-
-//   const dateRegex = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/;
-//   if (!dateRegex.test(start_date) || !dateRegex.test(end_date)) {
-//     return res.status(400).json({ error: 'Formato de fecha inválido. Use YYYY-MM-DD HH:MM:SS' });
-//   }
-
-//   try {
-//     const toUTCISOString = (localDateTimeStr) => {
-//       const isoLocal = localDateTimeStr.replace(' ', 'T');
-//       const dateObj = new Date(isoLocal);
-//       if (isNaN(dateObj)) throw new Error('Fecha inválida');
-//       return dateObj.toISOString();
-//     };
-
-//     const startUTC = toUTCISOString(start_date);
-//     const endUTC = toUTCISOString(end_date);
-
-//     // Consulta de órdenes activas entre fechas
-//     const ordersSql = `
-//       SELECT
-//         o.id,
-//         o.uid,
-//         o.timestamp,
-//         o.total,
-//         o.subtotal,
-//         o.amount_received,
-//         o.change_amount,
-//         o.payment_method,
-//         o.delivery,
-//         o.delivery_cost
-//       FROM orders o
-//       WHERE o.timestamp BETWEEN ? AND ? AND o.active = 1
-//       ORDER BY o.timestamp DESC
-//     `;
-//     const orders = db.prepare(ordersSql).all(startUTC, endUTC);
-
-//     if (orders.length === 0) {
-//       return res.json({
-//         summary: {
-//           total_orders: 0,
-//           total_revenue: 0,
-//           average_order_value: 0,
-//           delivery_orders: 0,
-//           total_delivery_revenue: 0
-//         },
-//         details: [],
-//         period: { start_date, end_date }
-//       });
-//     }
-
-//     // Obtener ítems
-//     const itemsSql = `
-//       SELECT
-//         oi.id as order_item_id,
-//         oi.order_id,
-//         oi.quantity,
-//         p.id as product_id,
-//         p.name as product_name,
-//         p.price as product_price,
-//         c.name as category,
-//         oin.name as note_name,
-//         oin.price as note_price
-//       FROM order_items oi
-//       JOIN products p ON p.id = oi.product_id
-//       LEFT JOIN categories c ON c.id = p.category_id
-//       LEFT JOIN order_item_notes oin ON oin.order_item_id = oi.id
-//       WHERE oi.order_id IN (${orders.map(() => '?').join(',')})
-//     `;
-//     const itemsRaw = db.prepare(itemsSql).all(...orders.map(o => o.id));
-
-//     const orderItemsMap = {};
-//     for (const row of itemsRaw) {
-//       const orderId = row.order_id;
-//       const orderItemId = row.order_item_id;
-
-//       if (!orderItemsMap[orderId]) orderItemsMap[orderId] = [];
-
-//       let item = orderItemsMap[orderId].find(i => i.id === orderItemId);
-
-//       if (!item) {
-//         item = {
-//           id: orderItemId,
-//           product: {
-//             id: row.product_id,
-//             name: row.product_name,
-//             price: row.product_price,
-//             category: row.category
-//           },
-//           quantity: row.quantity,
-//           notes: []
-//         };
-//         orderItemsMap[orderId].push(item);
-//       }
-
-//       if (row.note_name) {
-//         item.notes.push({
-//           name: row.note_name,
-//           price: row.note_price
-//         });
-//       }
-//     }
-
-//     const detailedSales = orders.map(order => ({
-//       ...order,
-//       items: orderItemsMap[order.id] || []
-//     }));
-
-//     // Resumen solo con órdenes activas
-//     const summarySql = `
-//       SELECT
-//         COUNT(DISTINCT o.id) as total_orders,
-//         SUM(o.total) as total_revenue,
-//         AVG(o.total) as average_order_value,
-//         SUM(CASE WHEN o.delivery = 1 THEN 1 ELSE 0 END) as delivery_orders,
-//         SUM(o.delivery_cost) as total_delivery_revenue
-//       FROM orders o
-//       WHERE o.timestamp BETWEEN ? AND ? AND o.active = 1
-//     `;
-//     const summary = db.prepare(summarySql).get(startUTC, endUTC);
-
-//     res.json({
-//       summary,
-//       details: detailedSales,
-//       period: { start_date, end_date }
-//     });
-//   } catch (err) {
-//     console.error('Error al generar reporte:', err);
-//     res.status(500).json({ error: 'Error al generar reporte de ventas' });
-//   }
-// });
 
 
 // Informe de ventas entre dos fechas con hora (solo órdenes activas)

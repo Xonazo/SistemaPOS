@@ -131,6 +131,8 @@ export default function Home() {
 
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [consumptionType, setConsumptionType] = useState('servir');
+
 
 
   useEffect(() => {
@@ -230,6 +232,7 @@ export default function Home() {
       timestamp: ventaFinal.timestamp,
       delivery: ventaFinal.delivery ? 1 : 0,  // si en BD es INTEGER 0 o 1
       delivery_cost: ventaFinal.deliveryCost,
+      consumption_type: delivery.isDelivery ? 'llevar' : consumptionType,
     };
 
     console.log('🧾 Venta final:', payload);
@@ -245,6 +248,7 @@ export default function Home() {
     setPaymentMethod();
     setDelivery({ isDelivery: false, zone: 'zona1' });
     setAmountReceived(0);
+    setConsumptionType('servir');
 
     //alert('¡Pedido confirmado y enviado a cocina!');
   };
@@ -346,6 +350,7 @@ export default function Home() {
     setOrderItems([]);
     setPaymentMethod('');
     setAmountReceived(0);
+    setConsumptionType('servir');
 
     setDelivery({ isDelivery: false, zone: 'zona1' });
 
@@ -389,6 +394,7 @@ export default function Home() {
       timestamp: new Date().toISOString(),
       delivery: delivery.isDelivery,
       deliveryCost: delivery.isDelivery ? deliveryCost : 0,
+      consumption_type: delivery.isDelivery ? 'llevar' : consumptionType,
     };
 
     // Imprimir ticket de venta
@@ -400,6 +406,8 @@ export default function Home() {
     setPaymentMethod('efectivo');
     setDelivery({ isDelivery: false, zone: 'zona1' });
     setAmountReceived(0);
+    setConsumptionType('servir');
+
   };
 
   const handlePrintBoth = async () => {
@@ -413,6 +421,7 @@ export default function Home() {
       timestamp: new Date().toISOString(),
       delivery: delivery.isDelivery,
       deliveryCost: delivery.isDelivery ? deliveryCost : 0,
+      consumption_type: delivery.isDelivery ? 'llevar' : consumptionType,
     };
 
     try {
@@ -439,6 +448,8 @@ export default function Home() {
       setPaymentMethod('efectivo');
       setDelivery({ isDelivery: false, zone: 'zona1' });
       setAmountReceived(0);
+      setConsumptionType('servir');
+
 
       //alert('Ambos tickets impresos correctamente');
     } catch (error) {
@@ -478,10 +489,10 @@ export default function Home() {
       <div className=" flex flex-col h-screen bg-blue-900 pt-19 px-4">
         <NavBar />
 
-        <div className="w-full max-w-[1536px] mx-auto bg-white rounded-xl shadow-2xl  flex flex-col">
-          <div className="flex flex-col md:flex-row flex-grow">
+      <div className="w-full max-w-[1536px] mx-auto bg-white rounded-xl shadow-2xl flex flex-col flex-1 min-h-0">
+    <div className="flex flex-col md:flex-row flex-1 min-h-0 overflow-hidden">
             {/* Products panel (left side) */}
-            <div className="w-full md:w-3/5 p-4  overflow-y-auto">
+      <div className="w-full md:w-3/5 p-4 overflow-y-auto flex-1 min-h-0">
               <ProductPanel
                 products={products}
                 onAddToOrder={handleAddToOrder}
@@ -509,6 +520,8 @@ export default function Home() {
                 deliveryCost={deliveryCost}
                 onResetAllOrder={resetAllOrder}
                 onPrintBoth={handlePrintBoth}
+                consumptionType={consumptionType}
+                onConsumptionTypeChange={setConsumptionType}
 
 
               />
